@@ -94,9 +94,10 @@ class App {
   }
 
   private handleInteraction() {
+    this.audioManager.resume();
+
     if (!this.hasInteracted) {
       this.hasInteracted = true;
-      this.audioManager.resume();
 
       const overlay = document.getElementById('overlay');
       if (overlay) {

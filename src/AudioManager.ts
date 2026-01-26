@@ -60,10 +60,42 @@ export class AudioManager {
         this.narrationGain.connect(this.ctx.destination);
     }
 
-    resume() {
+    async resume() {
         if (this.ctx.state === 'suspended') {
-            this.ctx.resume();
+            await this.ctx.resume();
         }
+
+        // Silent buffer trick to unlock AudioContext on some Safari versions
+        const buffer = this.ctx.createBuffer(1, 1, 22050);
+        const source = this.ctx.createBufferSource();
+        source.buffer = buffer;
+        source.connect(this.ctx.destination);
+        source.start(0);
+
+        // Prime HTML5 Audio elements for Safari mobile
+        // They must be played/paused during a user interaction to be "unlocked"
+        try {
+            // We play/pause them immediately. This doesn't actually play sound
+            // because they are muted or the gain is 0, but it satisfies Safari's requirement.
+            const musicPromise = this.music.play();
+            const narrationPromise = this.narration.play();
+
+            if (musicPromise !== undefined) {
+                musicPromise.then(() => {
+                    this.music.pause();
+                    this.music.currentTime = 0;
+                }).catch(() => { });
+            }
+            if (narrationPromise !== undefined) {
+                narrationPromise.then(() => {
+                    this.narration.pause();
+                    this.narration.currentTime = 0;
+                }).catch(() => { });
+            }
+        } catch (e) {
+            console.error("Audio priming failed", e);
+        }
+
         this.isEnabled = true;
 
         // Fade in wind
