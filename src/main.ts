@@ -165,7 +165,13 @@ class App {
     this.penguin.update(dt, this.input.forward, this.audioManager)
     this.environment.update(dt, this.penguin.position, time)
     this.audioManager.update(dt, this.input.forward)
-    this.subtitleOverlay.update(this.audioManager.getNarrationTime())
+
+    if (this.audioManager.isNarrationPlaying()) {
+      this.subtitleOverlay.update(this.audioManager.getNarrationTime())
+    } else {
+      this.subtitleOverlay.setVisible(false)
+    }
+
     this.colony.update(dt, this.penguin.position)
 
     // Auto Cinematic Trigger

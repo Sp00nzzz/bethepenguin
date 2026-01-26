@@ -107,6 +107,10 @@ export class AudioManager {
         return this.narration.currentTime;
     }
 
+    public isNarrationPlaying(): boolean {
+        return this.narrationStarted && !this.narration.paused;
+    }
+
     update(dt: number, isWalking: boolean) {
         if (!this.isEnabled) return;
 

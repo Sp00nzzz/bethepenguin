@@ -10,14 +10,14 @@ export class SubtitleOverlay {
         this.element.style.bottom = '10%';
         this.element.style.left = '50%';
         this.element.style.transform = 'translateX(-50%)';
-        this.element.style.width = '70vw';
+        this.element.style.width = '100vw';
         this.element.style.textAlign = 'center';
-        this.element.style.color = '#FDEB37'; // Updated yellow
+        this.element.style.color = '#FDEB37';
         this.element.style.fontFamily = '"Inter", sans-serif';
-        this.element.style.fontSize = '24px';
+        this.element.style.fontSize = '20px'; // Smaller font
         this.element.style.fontWeight = '500';
         this.element.style.letterSpacing = '0.5px';
-        this.element.style.lineHeight = '1.4';
+        this.element.style.lineHeight = '1.2';
         this.element.style.pointerEvents = 'none';
         this.element.style.opacity = '0';
         this.element.style.zIndex = '1000';
@@ -66,6 +66,7 @@ export class SubtitleOverlay {
     public setVisible(visible: boolean) {
         if (!visible) {
             this.element.style.opacity = '0';
+            this.activeIndex = -1;
         }
     }
 }
