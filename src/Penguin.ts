@@ -213,39 +213,35 @@ export class Penguin {
         }
     }
 
-    update(dt: number, forward: number, turn: number, audio?: AudioManager) {
+    update(dt: number, moving: boolean, audio?: AudioManager) {
         this.updateFootprints(dt);
 
         if (!this.body) return; // Not loaded yet
 
-        const moving = Math.abs(forward) > 0.01 || Math.abs(turn) > 0.01;
-
         if (!moving) {
             // Return to stance
             this.mesh.rotation.z = THREE.MathUtils.lerp(this.mesh.rotation.z, 0, dt * 5);
+            // Reset parts if we had them
             return;
         }
 
-        this.walkTime += dt * this.waddleSpeed * Math.max(Math.abs(forward), Math.abs(turn));
+        this.walkTime += dt * this.waddleSpeed;
 
-        // Steering
-        this.mesh.rotation.y -= turn * dt * 2.0;
-
-        // Forward Movement (relative to direction)
-        const moveDir = new THREE.Vector3(0, 0, 1);
-        moveDir.applyQuaternion(this.mesh.quaternion);
-        this.mesh.position.addScaledVector(moveDir, forward * this.moveSpeed * dt);
+        // Forward Movement
+        this.mesh.position.z += this.moveSpeed * dt;
 
         // Waddle 
         const waddle = Math.sin(this.walkTime);
         this.mesh.rotation.z = waddle * 0.1; // Waddle whole body
-        // Slight yaw waddle already handled by steering or we can add extra
+        this.mesh.rotation.y = waddle * 0.05; // Slight yaw
 
         // Bobbing (whole object)
         const bob = Math.abs(Math.cos(this.walkTime));
+        // Base Y is 0. If model pivot is at feet, we don't need to offset much, 
+        // but maybe we want a hop.
         this.mesh.position.y = bob * 0.05;
 
-        // Footprint triggering logic
+        // Footprint triggering logic (same as before)
         if (this.walkTime - this.lastStepTime > Math.PI) {
             this.lastStepTime = this.walkTime;
             if (audio) {
@@ -254,10 +250,7 @@ export class Penguin {
 
             // Spawn footprints at roughly the penguin's current position + offset for foot
             const footPos = this.position.clone();
-            const footOffset = new THREE.Vector3(this.isLeftStep ? -0.2 : 0.2, 0, 0);
-            footOffset.applyQuaternion(this.mesh.quaternion);
-            footPos.add(footOffset);
-
+            footPos.x += this.isLeftStep ? -0.2 : 0.2;
             this.spawnFootprint(footPos, this.isLeftStep);
 
             // Flip step for next time

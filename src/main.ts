@@ -5,7 +5,6 @@ import { Penguin } from './Penguin'
 import { AudioManager } from './AudioManager'
 import { ColonyManager } from './ColonyManager'
 import { SubtitleOverlay } from './SubtitleOverlay'
-import { VirtualJoystick } from './VirtualJoystick'
 
 // --- Configuration ---
 const CONFIG = {
@@ -25,10 +24,8 @@ class App {
   private audioManager: AudioManager
   private colony: ColonyManager
   private subtitleOverlay: SubtitleOverlay
-  private joystick: VirtualJoystick
 
-  private input = { forward: 0, turn: 0 }
-  private keys = { forward: false, backward: false, left: false, right: false }
+  private input = { forward: false }
   private hasInteracted = false
   private walkingTimer = 0
 
@@ -67,13 +64,14 @@ class App {
     this.penguin = new Penguin(this.scene)
     this.environment = new Environment(this.scene)
     this.colony = new ColonyManager(this.scene)
-    this.joystick = new VirtualJoystick(() => this.handleInteraction())
 
     // Event Listeners
     window.addEventListener('resize', this.onResize.bind(this))
     window.addEventListener('keydown', this.onKeyDown.bind(this))
     window.addEventListener('keyup', this.onKeyUp.bind(this))
 
+    window.addEventListener('touchstart', this.onTouchStart.bind(this))
+    window.addEventListener('touchend', this.onTouchEnd.bind(this))
     window.addEventListener('mousedown', this.handleInteraction.bind(this))
 
     // Toggle Fullscreen on Double Click
@@ -135,11 +133,9 @@ class App {
 
   private onKeyDown(e: KeyboardEvent) {
     this.handleInteraction();
-    if (e.code === 'KeyW' || e.code === 'ArrowUp') this.keys.forward = true
-    if (e.code === 'KeyS' || e.code === 'ArrowDown') this.keys.backward = true
-    if (e.code === 'KeyA' || e.code === 'ArrowLeft') this.keys.left = true
-    if (e.code === 'KeyD' || e.code === 'ArrowRight') this.keys.right = true
-
+    if (e.code === 'KeyW' || e.code === 'ArrowUp') {
+      this.input.forward = true
+    }
     if (e.code === 'KeyC') {
       this.triggerCinematic();
     }
@@ -159,10 +155,18 @@ class App {
   }
 
   private onKeyUp(e: KeyboardEvent) {
-    if (e.code === 'KeyW' || e.code === 'ArrowUp') this.keys.forward = false
-    if (e.code === 'KeyS' || e.code === 'ArrowDown') this.keys.backward = false
-    if (e.code === 'KeyA' || e.code === 'ArrowLeft') this.keys.left = false
-    if (e.code === 'KeyD' || e.code === 'ArrowRight') this.keys.right = false
+    if (e.code === 'KeyW' || e.code === 'ArrowUp') {
+      this.input.forward = false
+    }
+  }
+
+  private onTouchStart() {
+    this.handleInteraction();
+    this.input.forward = true;
+  }
+
+  private onTouchEnd() {
+    this.input.forward = false;
   }
 
   private animate() {
@@ -171,25 +175,10 @@ class App {
     const dt = this.clock.getDelta()
     const time = this.clock.getElapsedTime()
 
-    // Update Input
-    if (this.joystick.active) {
-      this.input.forward = -this.joystick.axisY; // Joystick up is negative Y
-      this.input.turn = this.joystick.axisX;
-    } else {
-      this.input.forward = (this.keys.forward ? 1 : 0) - (this.keys.backward ? 1 : 0);
-      this.input.turn = (this.keys.right ? 1 : 0) - (this.keys.left ? 1 : 0);
-    }
-
-    // Clamp forward to positive only if requested, but let's allow backward for keyboard at least
-    // Requirements said "JOYSTICK SHOULD ONLY MAKE THE PENGUIN MOVE FORWARD"
-    if (this.joystick.active && this.input.forward < 0) {
-      this.input.forward = 0;
-    }
-
     // Update Game State
-    this.penguin.update(dt, this.input.forward, this.input.turn, this.audioManager)
+    this.penguin.update(dt, this.input.forward, this.audioManager)
     this.environment.update(dt, this.penguin.position, time)
-    this.audioManager.update(dt, this.input.forward > 0.1)
+    this.audioManager.update(dt, this.input.forward)
 
     if (this.audioManager.isNarrationPlaying()) {
       this.subtitleOverlay.update(this.audioManager.getNarrationTime())
@@ -200,7 +189,7 @@ class App {
     this.colony.update(dt, this.penguin.position)
 
     // Auto Cinematic Trigger
-    if (this.input.forward > 0.1) {
+    if (this.input.forward) {
       this.walkingTimer += dt;
       if (this.walkingTimer > 25) { // Every 25s of walking
         this.walkingTimer = 0;

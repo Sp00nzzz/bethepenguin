@@ -27,6 +27,12 @@ html {
   /* Prevent browser handling of gestures */
   background-color: #000;
   /* Ensure black background */
+  user-select: none;
+  /* Prevent text selection */
+  -webkit-user-select: none;
+  /* Safari/Chrome/iOS select */
+  -webkit-touch-callout: none;
+  /* Disable long-press context menu (iOS) */
 }
 
 #app {
@@ -84,13 +90,19 @@ canvas {
   position: absolute;
   bottom: 20px;
   left: 20px;
-  pointer-events: none;
+  pointer-events: auto;
   font-size: 0.8rem;
   letter-spacing: 0.1em;
   color: rgba(255, 255, 255, 0.5);
   font-weight: 700;
   font-family: 'Inter', system-ui, sans-serif;
   z-index: 100;
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+#social-handle:hover {
+  color: rgba(255, 255, 255, 1);
 }
 
 #distance-display {
@@ -116,7 +128,6 @@ canvas {
   opacity: 0.6;
   font-weight: 500;
 }
-
 
 /* Cinematic Bars */
 .cinematic-bar {
@@ -145,47 +156,4 @@ body.force-cinematic-bars .cinematic-bar {
 
 body.bars-suppressed .cinematic-bar {
   height: 0 !important;
-}
-
-/* Virtual Joystick */
-#joystick-container {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  padding-left: max(30px, env(safe-area-inset-left));
-  padding-bottom: max(30px, env(safe-area-inset-bottom));
-  z-index: 800;
-  user-select: none;
-  touch-action: none;
-}
-
-.joystick-base {
-  width: 140px;
-  height: 140px;
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(8px);
-  border-radius: 50%;
-  position: relative;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-  opacity: 0.3;
-  transition: opacity 0.3s ease;
-}
-
-.joystick-base:active {
-  opacity: 0.5;
-}
-
-.joystick-knob {
-  width: 60px;
-  height: 60px;
-  background: rgba(255, 255, 255, 0.4);
-  backdrop-filter: blur(4px);
-  border-radius: 50%;
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-  pointer-events: none;
 }
