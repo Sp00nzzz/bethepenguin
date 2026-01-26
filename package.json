@@ -1,0 +1,24 @@
+{
+  "name": "penguin",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "transcribe:narration": "tsx scripts/transcribeNarration.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^25.0.10",
+    "@types/three": "^0.182.0",
+    "tsx": "^4.21.0",
+    "typescript": "~5.9.3",
+    "vite": "^7.2.4"
+  },
+  "dependencies": {
+    "dotenv": "^17.2.3",
+    "openai": "^6.16.0",
+    "three": "^0.182.0"
+  }
+}

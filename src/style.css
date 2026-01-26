@@ -1,0 +1,142 @@
+:root {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  color-scheme: dark;
+  color: rgba(255, 255, 255, 0.87);
+  background-color: #000;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body,
+html {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  /* Prevent scrolling */
+  overscroll-behavior: none;
+  /* Prevent bounce effects */
+  touch-action: none;
+  /* Prevent browser handling of gestures */
+  background-color: #000;
+  /* Ensure black background */
+}
+
+#app {
+  width: 100%;
+  height: 100%;
+  position: fixed;
+  /* Fixed prevents it from scrolling away */
+  top: 0;
+  left: 0;
+  outline: none;
+}
+
+canvas {
+  display: block;
+  outline: none;
+}
+
+#overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  text-align: center;
+  opacity: 1;
+  font-size: clamp(2rem, 8vw, 4.5rem);
+  letter-spacing: 0.6em;
+  text-transform: uppercase;
+  color: #fff;
+  font-weight: 200;
+  text-shadow: 0 0 30px rgba(255, 255, 255, 0.4);
+  white-space: nowrap;
+  user-select: none;
+  z-index: 1000;
+  transition: opacity 0.5s ease-out;
+  /* Reduced for a snappier feel on removal */
+}
+
+#overlay.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+@media (max-width: 768px) {
+  #overlay {
+    letter-spacing: 0.3em;
+    white-space: normal;
+    padding: 0 20px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+}
+
+#social-handle {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  pointer-events: none;
+  font-size: 0.8rem;
+  letter-spacing: 0.1em;
+  color: rgba(255, 255, 255, 0.5);
+  font-weight: 700;
+  font-family: 'Inter', system-ui, sans-serif;
+  z-index: 100;
+}
+
+#distance-display {
+  position: absolute;
+  top: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
+  color: rgba(255, 255, 255, 0.9);
+  font-family: 'Inter', system-ui, sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+#distance-text {
+  font-size: 1rem;
+}
+
+#distance-unit {
+  opacity: 0.6;
+  font-weight: 500;
+}
+
+/* Cinematic Bars */
+.cinematic-bar {
+  position: fixed;
+  left: 0;
+  width: 100%;
+  height: 0;
+  background: #000;
+  z-index: 900;
+  transition: height 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
+}
+
+.cinematic-bar.top {
+  top: 0;
+}
+
+.cinematic-bar.bottom {
+  bottom: 0;
+}
+
+body.cinematic-active .cinematic-bar {
+  height: 10vh;
+}
