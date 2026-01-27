@@ -8,7 +8,7 @@ export class AudioManager {
     private isEnabled: boolean = false;
     private musicStarted: boolean = false;
     private narrationStarted: boolean = false;
-    private walkTimer: number = 0;
+
     private narrationTimer: number = 0;
 
     constructor() {
@@ -111,12 +111,11 @@ export class AudioManager {
         return this.narrationStarted && !this.narration.paused;
     }
 
-    update(dt: number, isWalking: boolean) {
+    update(dt: number, currentDistance: number) {
         if (!this.isEnabled) return;
 
-        if (isWalking && !this.musicStarted) {
-            this.walkTimer += dt;
-            if (this.walkTimer >= 10) {
+        if (!this.musicStarted) {
+            if (currentDistance >= 25) {
                 this.musicStarted = true;
                 this.music.play().catch(e => console.error("Music play failed:", e));
                 // Slow fade in over 5 seconds

@@ -214,7 +214,7 @@ class App {
     const isMoving = this.input.forward || this.input.fast;
     this.penguin.update(dt, isMoving, speedMultiplier, this.audioManager)
     this.environment.update(dt, this.penguin.position, time)
-    this.audioManager.update(dt, isMoving)
+    this.audioManager.update(dt, this.penguin.position.z)
 
     if (this.audioManager.isNarrationPlaying()) {
       this.subtitleOverlay.update(this.audioManager.getNarrationTime())
