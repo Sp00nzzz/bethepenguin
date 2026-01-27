@@ -149,7 +149,7 @@ export class Environment {
         // Actually we are using world positions in shader, so no tiling issues.
 
         // FAR GROUND (Fills the horizon to the mountain)
-        const farGeom = new THREE.PlaneGeometry(10000, 10000, 32, 32);
+        const farGeom = new THREE.PlaneGeometry(30000, 30000, 32, 32);
         const farMat = new THREE.MeshStandardMaterial({
             color: 0xe0f0ff,
             roughness: 1.0,
@@ -265,13 +265,13 @@ export class Environment {
     /**
      * Creates a single mountain mesh with configurable position, scale, height, and noise seed.
      * @param offsetX - Horizontal offset from center
-     * @param offsetZ - Depth offset (added to base Z=3500)
+     * @param offsetZ - Depth offset (added to base Z=7500)
      * @param scale - Size multiplier (1.0 = original 4000x4000)
      * @param heightScale - Height multiplier (1.0 = original heights)
      * @param seed - Noise seed for variation
      */
     private createMountainMesh(offsetX: number, offsetZ: number, scale: number, heightScale: number, seed: number): THREE.Mesh {
-        const baseSize = 4000 * scale;
+        const baseSize = 10000 * scale;
         const segs = Math.floor(256 * Math.max(0.75, scale)); // Minimum 192 segments for realism
         const geom = new THREE.PlaneGeometry(baseSize, baseSize, segs, segs);
         const pos = geom.attributes.position;
@@ -302,14 +302,14 @@ export class Environment {
         };
 
         // Deform vertices
-        const radius = 1750 * scale;
+        const radius = 4500 * scale;
         for (let i = 0; i < pos.count; i++) {
             const x = pos.getX(i);
             const y = pos.getY(i);
             const d = Math.sqrt(x * x + y * y);
 
-            let mask = Math.max(0, 1 - d / radius);
-            mask = Math.pow(mask, 1.5);
+            let mask = Math.max(0, 1 - Math.pow(d / radius, 1.5));
+            mask = Math.pow(mask, 1.0);
 
             if (mask <= 0) {
                 pos.setZ(i, -10);
@@ -318,11 +318,12 @@ export class Environment {
 
             let h = 0;
             const n1 = fbm(x * 0.001, y * 0.001, 4);
-            h += n1 * 2000 * mask * heightScale;
+            h += n1 * 1200 * mask * heightScale;
             const n2 = fbm(x * 0.005, y * 0.005, 6);
-            h += n2 * 250 * mask * heightScale;
-            const ridge = 1.0 - Math.abs(fbm(x * 0.0006 + 50, y * 0.0006 + 50, 2) * 2.0 - 1.0);
-            h += Math.pow(ridge, 4.0) * 750 * mask * heightScale;
+            h += n2 * 150 * mask * heightScale;
+            const ridgeRaw = 1.0 - Math.abs(fbm(x * 0.0006 + 50, y * 0.0006 + 50, 2) * 2.0 - 1.0);
+            const ridge = Math.max(0, ridgeRaw);
+            h += Math.pow(ridge, 1.8) * 500 * mask * heightScale;
 
             pos.setZ(i, h);
         }
@@ -361,7 +362,7 @@ export class Environment {
 
         const mesh = new THREE.Mesh(geom, mountainMat);
         mesh.rotation.x = -Math.PI / 2;
-        mesh.position.set(offsetX, -10, 3500 + offsetZ);
+        mesh.position.set(offsetX, -10, 7500 + offsetZ);
 
         return mesh;
     }

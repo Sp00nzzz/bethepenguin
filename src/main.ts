@@ -1,4 +1,5 @@
 import './style.css'
+import './ending.css'
 import * as THREE from 'three'
 import { Environment } from './Environment'
 import { Penguin } from './Penguin'
@@ -25,7 +26,7 @@ class App {
   private colony: ColonyManager
   private subtitleOverlay: SubtitleOverlay
 
-  private input = { forward: false }
+  private input = { forward: false, fast: false }
   private hasInteracted = false
   private walkingTimer = 0
 
@@ -34,7 +35,11 @@ class App {
   private cinematicTimer = 0
   private cinematicPhaseTimer = 0
   private currentCinematicOffset = new THREE.Vector3(0, 2, -5)
+
   private readonly DEFAULT_OFFSET = new THREE.Vector3(0, 2, -5)
+
+  // Ending State
+  private endingTriggered = false
 
   constructor(container: HTMLElement) {
     this.clock = new THREE.Clock()
@@ -54,7 +59,7 @@ class App {
     // Setup Scene
     this.scene = new THREE.Scene()
     this.scene.background = new THREE.Color(CONFIG.fogColor)
-    this.scene.fog = new THREE.FogExp2(CONFIG.fogColor, 0.0004) // Very light fog for massive distance
+    this.scene.fog = new THREE.FogExp2(CONFIG.fogColor, 0.0002) // Reduced fog to see mountains at 5km+
 
     // Setup Camera
     this.camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 10000)
@@ -131,13 +136,37 @@ class App {
     this.currentCinematicOffset.copy(presets[Math.floor(Math.random() * presets.length)]);
   }
 
+  private triggerEnding() {
+    this.endingTriggered = true;
+
+    // Stop movement immediately
+    this.input.forward = false;
+    this.input.fast = false;
+
+    // Trigger visual sequence
+    const container = document.getElementById('ending-container');
+    if (container) {
+      // 1. Fade to Black (starts immediately, takes 3s)
+      container.classList.add('fade-scene');
+
+      // 2. Text Fade In (Wait 3s for black + 2s delay = 5s)
+      setTimeout(() => {
+        container.classList.add('show-text');
+      }, 5000);
+    }
+  }
+
   private onKeyDown(e: KeyboardEvent) {
+    if (this.endingTriggered) return;
     this.handleInteraction();
     if (e.code === 'KeyW' || e.code === 'ArrowUp') {
       this.input.forward = true
     }
     if (e.code === 'KeyC') {
       this.triggerCinematic();
+    }
+    if (e.code === 'KeyP') {
+      this.input.fast = true;
     }
     if (e.code === 'KeyF') {
       const isShowing = (document.body.classList.contains('cinematic-active') ||
@@ -155,12 +184,17 @@ class App {
   }
 
   private onKeyUp(e: KeyboardEvent) {
+    if (this.endingTriggered) return;
     if (e.code === 'KeyW' || e.code === 'ArrowUp') {
       this.input.forward = false
+    }
+    if (e.code === 'KeyP') {
+      this.input.fast = false;
     }
   }
 
   private onTouchStart() {
+    if (this.endingTriggered) return;
     this.handleInteraction();
     this.input.forward = true;
   }
@@ -176,9 +210,11 @@ class App {
     const time = this.clock.getElapsedTime()
 
     // Update Game State
-    this.penguin.update(dt, this.input.forward, this.audioManager)
+    const speedMultiplier = this.input.fast ? 20.0 : 1.0;
+    const isMoving = this.input.forward || this.input.fast;
+    this.penguin.update(dt, isMoving, speedMultiplier, this.audioManager)
     this.environment.update(dt, this.penguin.position, time)
-    this.audioManager.update(dt, this.input.forward)
+    this.audioManager.update(dt, isMoving)
 
     if (this.audioManager.isNarrationPlaying()) {
       this.subtitleOverlay.update(this.audioManager.getNarrationTime())
@@ -189,7 +225,7 @@ class App {
     this.colony.update(dt, this.penguin.position)
 
     // Auto Cinematic Trigger
-    if (this.input.forward) {
+    if (isMoving) {
       this.walkingTimer += dt;
       if (this.walkingTimer > 25) { // Every 25s of walking
         this.walkingTimer = 0;
@@ -242,6 +278,11 @@ class App {
     if (distanceText) {
       const distance = Math.max(0, this.penguin.position.z);
       distanceText.innerText = Math.floor(distance).toLocaleString();
+    }
+
+    // Check Ending
+    if (!this.endingTriggered && this.penguin.position.z >= 3000) {
+      this.triggerEnding();
     }
 
     this.renderer.render(this.scene, this.camera)

@@ -213,7 +213,7 @@ export class Penguin {
         }
     }
 
-    update(dt: number, moving: boolean, audio?: AudioManager) {
+    update(dt: number, moving: boolean, speedMultiplier: number = 1.0, audio?: AudioManager) {
         this.updateFootprints(dt);
 
         if (!this.body) return; // Not loaded yet
@@ -225,10 +225,13 @@ export class Penguin {
             return;
         }
 
-        this.walkTime += dt * this.waddleSpeed;
+        const effectiveWaddleSpeed = this.waddleSpeed * speedMultiplier;
+        const effectiveMoveSpeed = this.moveSpeed * speedMultiplier;
+
+        this.walkTime += dt * effectiveWaddleSpeed;
 
         // Forward Movement
-        this.mesh.position.z += this.moveSpeed * dt;
+        this.mesh.position.z += effectiveMoveSpeed * dt;
 
         // Waddle 
         const waddle = Math.sin(this.walkTime);
