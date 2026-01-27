@@ -6,6 +6,7 @@ import { Penguin } from './Penguin'
 import { AudioManager } from './AudioManager'
 import { ColonyManager } from './ColonyManager'
 import { SubtitleOverlay } from './SubtitleOverlay'
+import { supabase } from './supabaseClient'
 
 // --- Configuration ---
 const CONFIG = {
@@ -40,6 +41,7 @@ class App {
 
   // Ending State
   private endingTriggered = false
+  private hasPublished = false
 
   constructor(container: HTMLElement) {
     this.clock = new THREE.Clock()
@@ -153,7 +155,110 @@ class App {
       setTimeout(() => {
         container.classList.add('show-text');
       }, 5000);
+
+      // 3. Show Credits (Wait for text to display, then transition)
+      setTimeout(() => {
+        container.classList.add('show-credits');
+        this.loadLeaderboard();
+        this.setupCreditsListeners();
+      }, 10000);
     }
+  }
+
+  private async loadLeaderboard() {
+    const list = document.getElementById('leaderboard-list');
+    if (!list) return;
+
+    list.innerHTML = '<div class="leaderboard-entry"><span class="leaderboard-name">Loading...</span></div>';
+
+    try {
+      const { data, error } = await supabase
+        .from('leaderboard')
+        .select('id, name, created_at')
+        .order('created_at', { ascending: true })
+        .limit(50);
+
+      if (error) throw error;
+
+      if (!data || data.length === 0) {
+        list.innerHTML = '<div class="leaderboard-entry"><span class="leaderboard-name">Be the first penguin!</span></div>';
+        return;
+      }
+
+      list.innerHTML = data.map((entry, index) => `
+        <div class="leaderboard-entry" data-id="${entry.id}">
+          <span class="leaderboard-rank">${index + 1}.</span>
+          <span class="leaderboard-name">${this.escapeHtml(entry.name)}</span>
+        </div>
+      `).join('');
+    } catch (err: any) {
+      console.error('Failed to load leaderboard:', err);
+      const message = err?.message || 'Unknown error';
+      list.innerHTML = `<div class="leaderboard-entry"><span class="leaderboard-name">Error: ${this.escapeHtml(message)}</span></div>`;
+    }
+  }
+
+  private escapeHtml(text: string): string {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  private setupCreditsListeners() {
+    const publishBtn = document.getElementById('publish-btn');
+    const nameInput = document.getElementById('player-name') as HTMLInputElement;
+    const statusEl = document.getElementById('submit-status');
+
+    if (!publishBtn || !nameInput) return;
+
+    publishBtn.addEventListener('click', async () => {
+      if (this.hasPublished) return;
+
+      const name = nameInput.value.trim();
+      if (!name) {
+        if (statusEl) statusEl.textContent = 'Please enter a name';
+        return;
+      }
+
+      publishBtn.setAttribute('disabled', 'true');
+      if (statusEl) statusEl.textContent = 'Publishing...';
+
+      try {
+        const { error } = await supabase
+          .from('leaderboard')
+          .insert({ name });
+
+        if (error) throw error;
+
+        this.hasPublished = true;
+        if (statusEl) statusEl.textContent = 'Published!';
+        nameInput.disabled = true;
+
+        // Reload leaderboard to show new entry
+        await this.loadLeaderboard();
+
+        // Highlight the new entry
+        const entries = document.querySelectorAll('.leaderboard-entry');
+        entries.forEach(entry => {
+          const entryName = entry.querySelector('.leaderboard-name')?.textContent;
+          if (entryName === name) {
+            entry.classList.add('new-entry');
+          }
+        });
+      } catch (err: any) {
+        console.error('Failed to publish:', err);
+        const message = err?.message || err?.code || 'Unknown error';
+        if (statusEl) statusEl.textContent = `Error: ${message}`;
+        publishBtn.removeAttribute('disabled');
+      }
+    });
+
+    // Allow Enter key to submit
+    nameInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        publishBtn.click();
+      }
+    });
   }
 
   private onKeyDown(e: KeyboardEvent) {
