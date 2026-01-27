@@ -151,10 +151,10 @@ class App {
       // 1. Fade to Black (starts immediately, takes 3s)
       container.classList.add('fade-scene');
 
-      // 2. Text Fade In (Wait 3s for black + 2s delay = 5s)
+      // 2. Text Fade In (1 second after fade starts)
       setTimeout(() => {
         container.classList.add('show-text');
-      }, 5000);
+      }, 1000);
 
       // 3. Show Credits (Wait for text to display, then transition)
       setTimeout(() => {
