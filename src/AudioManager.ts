@@ -68,6 +68,27 @@ export class AudioManager {
 
         // Fade in wind
         this.windGain.gain.setTargetAtTime(0.05, this.ctx.currentTime, 2.0);
+
+        // Prime audio elements for mobile Safari
+        if (!this.musicStarted) {
+            this.music.play().then(() => {
+                if (!this.musicStarted) {
+                    this.music.pause();
+                    this.music.currentTime = 0;
+                }
+            }).catch(e => console.warn("Music priming failed/interrupted", e));
+        }
+
+        if (!this.narrationStarted) {
+            this.narration.volume = 0; // Silence briefly just in case
+            this.narration.play().then(() => {
+                if (!this.narrationStarted) {
+                    this.narration.pause();
+                    this.narration.currentTime = 0;
+                    this.narration.volume = 1; // Restore volume
+                }
+            }).catch(e => console.warn("Narration priming failed/interrupted", e));
+        }
     }
 
     playStep() {
