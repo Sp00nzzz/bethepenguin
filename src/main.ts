@@ -169,6 +169,11 @@ class App {
     const list = document.getElementById('leaderboard-list');
     if (!list) return;
 
+    if (!supabase) {
+      list.innerHTML = '<div class="leaderboard-entry"><span class="leaderboard-name">Leaderboard unavailable</span></div>';
+      return;
+    }
+
     list.innerHTML = '<div class="leaderboard-entry"><span class="leaderboard-name">Loading...</span></div>';
 
     try {
@@ -217,6 +222,11 @@ class App {
       const name = nameInput.value.trim();
       if (!name) {
         if (statusEl) statusEl.textContent = 'Please enter a name';
+        return;
+      }
+
+      if (!supabase) {
+        if (statusEl) statusEl.textContent = 'Publishing unavailable';
         return;
       }
 
@@ -315,7 +325,7 @@ class App {
     const time = this.clock.getElapsedTime()
 
     // Update Game State
-    const speedMultiplier = this.input.fast ? 20.0 : 1.0;
+    const speedMultiplier = this.input.fast ? 200.0 : 1.0;
     const isMoving = this.input.forward || this.input.fast;
     this.penguin.update(dt, isMoving, speedMultiplier, this.audioManager)
     this.environment.update(dt, this.penguin.position, time)
