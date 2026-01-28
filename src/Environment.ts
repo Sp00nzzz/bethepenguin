@@ -177,21 +177,27 @@ export class Environment {
     private groundSnow: THREE.Points;
 
     private createGroundSnow(): THREE.Points {
-        const count = 2000;
+        const count = 3000; // Increased count for better volume
         const geom = new THREE.BufferGeometry();
         const positions = [];
+        const velocities = [];
         for (let i = 0; i < count; i++) {
             positions.push((Math.random() - 0.5) * 200);
-            positions.push(Math.random() * 0.5); // Very low to ground
+            positions.push(Math.random() * 0.5);
             positions.push((Math.random() - 0.5) * 200);
+
+            // Random wind variance
+            velocities.push(3.0 + Math.random() * 4.0); // x wind speed
+            velocities.push(1.5 + Math.random() * 2.0); // z wind speed
         }
         geom.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+        geom.setAttribute('velocity', new THREE.Float32BufferAttribute(velocities, 2));
 
         const mat = new THREE.PointsMaterial({
             color: 0xffffff,
             size: 0.05,
             transparent: true,
-            opacity: 0.4,
+            opacity: 0.3,
             fog: true
         });
 
@@ -368,21 +374,27 @@ export class Environment {
     }
 
     private createSnow(): THREE.Points {
-        const count = 5000;
+        const count = 6000; // Increased count
         const geom = new THREE.BufferGeometry();
         const positions = [];
+        const velocities = []; // x: fall speed, y: drift speed, z: wobble phase
         for (let i = 0; i < count; i++) {
-            positions.push((Math.random() - 0.5) * 100);
-            positions.push((Math.random()) * 40);
-            positions.push((Math.random() - 0.5) * 100);
+            positions.push((Math.random() - 0.5) * 120);
+            positions.push(Math.random() * 60);
+            positions.push((Math.random() - 0.5) * 120);
+
+            velocities.push(2.5 + Math.random() * 4.0); // Varied fall pace
+            velocities.push(0.3 + Math.random() * 0.7); // Drift pace
+            velocities.push(Math.random() * Math.PI * 2); // Phase
         }
         geom.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+        geom.setAttribute('velocity', new THREE.Float32BufferAttribute(velocities, 3));
 
         const mat = new THREE.PointsMaterial({
             color: 0xffffff,
-            size: 0.2,
+            size: 0.18,
             transparent: true,
-            opacity: 0.8,
+            opacity: 0.7,
             fog: true
         });
 
@@ -402,33 +414,50 @@ export class Environment {
         this.farGround.position.x = playerPos.x;
         this.farGround.position.z = playerPos.z;
 
-        // Particles: Wrap around
+        // Particles: Wrap around with varied pace
         const snowPos = this.snowSystem.geometry.attributes.position;
+        const snowVel = this.snowSystem.geometry.attributes.velocity as THREE.BufferAttribute;
         for (let i = 0; i < snowPos.count; i++) {
+            let x = snowPos.getX(i);
             let y = snowPos.getY(i);
-            y -= dt * 2.0; // fall speed
+            let z = snowPos.getZ(i);
+
+            const vSpeed = snowVel.getX(i);
+            const drift = snowVel.getY(i);
+            const phase = snowVel.getZ(i);
+
+            y -= dt * vSpeed;
+            x += Math.sin(time * 0.5 + phase) * dt * drift; // Subtle swaying
+
             if (y < 0) {
-                y = 40;
+                y = 60;
+                // When resetting, randomize X and Z to maintain continuous field
+                x = (Math.random() - 0.5) * 120;
+                z = (Math.random() - 0.5) * 120;
             }
-            snowPos.setY(i, y);
+            snowPos.setXYZ(i, x, y, z);
         }
         snowPos.needsUpdate = true;
         this.snowSystem.position.set(playerPos.x, 0, playerPos.z);
 
-        // Ground Skim Particles
+        // Ground Skim Particles with varied wind speeds
         const skimPos = this.groundSnow.geometry.attributes.position;
+        const skimVel = this.groundSnow.geometry.attributes.velocity as THREE.BufferAttribute;
         for (let i = 0; i < skimPos.count; i++) {
             let x = skimPos.getX(i);
+            let y = skimPos.getY(i);
             let z = skimPos.getZ(i);
 
-            // Move with wind
-            x += dt * 5.0; // Wind speed
-            z += dt * 2.5;
+            const vx = skimVel.getX(i);
+            const vz = skimVel.getY(i);
+
+            x += dt * vx;
+            z += dt * vz;
 
             if (Math.abs(x) > 100) x = (Math.random() - 0.5) * 200;
             if (Math.abs(z) > 100) z = (Math.random() - 0.5) * 200;
 
-            skimPos.setXY(i, x, z);
+            skimPos.setXYZ(i, x, y, z);
         }
         skimPos.needsUpdate = true;
         this.groundSnow.position.set(playerPos.x, 0.1, playerPos.z);
