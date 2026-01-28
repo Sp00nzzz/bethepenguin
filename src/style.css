@@ -149,11 +149,6 @@ canvas {
   bottom: 0;
 }
 
-body.cinematic-active .cinematic-bar,
-body.force-cinematic-bars .cinematic-bar {
+body.cinematic-active .cinematic-bar {
   height: 10vh;
-}
-
-body.bars-suppressed .cinematic-bar {
-  height: 0 !important;
 }

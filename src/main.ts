@@ -27,7 +27,7 @@ class App {
   private colony: ColonyManager
   private subtitleOverlay: SubtitleOverlay
 
-  private input = { forward: false, fast: false }
+  private input = { forward: false }
   private hasInteracted = false
   private walkingTimer = 0
 
@@ -120,7 +120,6 @@ class App {
     this.isCinematicMode = true;
     this.cinematicTimer = 10; // Total 10 seconds of cinematic
     this.cinematicPhaseTimer = 0;
-    document.body.classList.remove('bars-suppressed');
     document.body.classList.add('cinematic-active');
     this.pickRandomCinematicOffset();
   }
@@ -143,7 +142,6 @@ class App {
 
     // Stop movement immediately
     this.input.forward = false;
-    this.input.fast = false;
 
     // Trigger visual sequence
     const container = document.getElementById('ending-container');
@@ -277,34 +275,12 @@ class App {
     if (e.code === 'KeyW' || e.code === 'ArrowUp') {
       this.input.forward = true
     }
-    if (e.code === 'KeyC') {
-      this.triggerCinematic();
-    }
-    if (e.code === 'KeyP') {
-      this.input.fast = true;
-    }
-    if (e.code === 'KeyF') {
-      const isShowing = (document.body.classList.contains('cinematic-active') ||
-        document.body.classList.contains('force-cinematic-bars')) &&
-        !document.body.classList.contains('bars-suppressed');
-
-      if (isShowing) {
-        document.body.classList.add('bars-suppressed');
-        document.body.classList.remove('force-cinematic-bars');
-      } else {
-        document.body.classList.remove('bars-suppressed');
-        document.body.classList.add('force-cinematic-bars');
-      }
-    }
   }
 
   private onKeyUp(e: KeyboardEvent) {
     if (this.endingTriggered) return;
     if (e.code === 'KeyW' || e.code === 'ArrowUp') {
       this.input.forward = false
-    }
-    if (e.code === 'KeyP') {
-      this.input.fast = false;
     }
   }
 
@@ -325,9 +301,8 @@ class App {
     const time = this.clock.getElapsedTime()
 
     // Update Game State
-    const speedMultiplier = this.input.fast ? 200.0 : 1.0;
-    const isMoving = this.input.forward || this.input.fast;
-    this.penguin.update(dt, isMoving, speedMultiplier, this.audioManager)
+    const isMoving = this.input.forward;
+    this.penguin.update(dt, isMoving, 1.0, this.audioManager)
     this.environment.update(dt, this.penguin.position, time)
     this.audioManager.update(dt, this.penguin.position.z)
 
